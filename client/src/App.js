@@ -1,12 +1,15 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
-
+import Transaction from './components/transaction';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 const axios = require('axios');
 const moment = require('moment');
+
+const server = 'http://99.230.192.253:3000'; //localhost (mbp)
+//const server = 'http://104.154.131.70:3000'; //google f1 micro
 
 class App extends Component {
 
@@ -24,7 +27,7 @@ class App extends Component {
   }
 
   getHistory() {
-    const promise = axios.get('http://localhost:3000/history');
+    const promise = axios.get(`${server}/history`);
     promise.then((response) => {
       this.setState({
         response: response.data
@@ -33,7 +36,10 @@ class App extends Component {
   }
 
   clearHistory() {
-    const promise = axios.post('http://localhost:3000/clear-history', '');
+    //eslint-disable-next-line
+    if (confirm('Are you sure you want to clear all transactions?')) {
+      const promise = axios.post(`${server}/clear-history`, '');
+    };
   }
 
   recordTrans() {
@@ -41,11 +47,11 @@ class App extends Component {
     const trans = {
       category: document.getElementById('inputCategory').value,
       price: document.getElementById('inputPrice').value,
-      date: this.state.startDate.format('MMMM D YYYY')
+      date: new Date(this.state.startDate.toDate().toDateString())
     };
 
     if (trans.category && trans.price) {
-      const promise = axios.post('http://localhost:3000/new-trans', trans);
+      const promise = axios.post(`${server}/new-trans`, trans);
       promise.then((response) => {
         this.getHistory();
       });
@@ -60,7 +66,7 @@ class App extends Component {
   }
 
   removeItem(id) {
-    const promise = axios.post('http://localhost:3000/remove-item', id);
+    const promise = axios.post(`${server}/remove-item`, id);
     promise.then((response) => {
       this.getHistory();
     });
@@ -74,6 +80,13 @@ class App extends Component {
 
   componentWillMount() {
     this.getHistory();
+  }
+
+   sortByDate(data) {
+     data.sort((a, b) => {
+       return a.date - b.date;
+     })
+     return data;
   }
 
   render() {
@@ -103,15 +116,13 @@ class App extends Component {
         <div className='showTransactions'>
           {this.state.response.reverse().map((transaction, index) => {
             return (
-              <div key={index}>
-                A {transaction.category} purchase on {transaction.date} cost ${transaction.price}
-                <button className='removeTransaction' onClick={() => this.removeItem(transaction)}>Remove transaction.</button>
+              <div className='transaction' key={index}>
+                <Transaction transaction={transaction} removeItem={this.removeItem}/>
               </div>
             )
           })}
         </div>
 
-        {this.state.date}
 
       </div>
 

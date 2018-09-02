@@ -8,7 +8,9 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost/history');
+//mongoose.connect('mongodb://localhost/history');
+mongoose.connect('mongodb://js:password1@ds133762.mlab.com:33762/history?authMechanism=SCRAM-SHA-1'); //mlab google cloud
+//mongoose.connect('mongodb+srv://js:Password1@cls0-mqzho.gcp.mongodb.net/test?retryWrites=true?authMechanism=SCRAM-SHA-1'); //mongodb atlas
 
 app.listen(3000, () => {
 	console.log('App listening on port 3000.');
