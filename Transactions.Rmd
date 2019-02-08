@@ -1,0 +1,173 @@
+---
+title: "Transactions for January 2019"
+output:
+     pdf_document:
+         latex_engine: xelatex
+---
+
+```{r echo=FALSE, error=TRUE, message=FALSE}
+library(tidyverse)
+library(knitr)
+knitr::opts_chunk$set(cache = TRUE, warning = FALSE, 
+                      message = FALSE, cache.lazy = FALSE)
+currentYear <- 2019
+currentMonth <- 1
+df <- read.csv(file = 'transactions.csv')
+df <- df[df$year==currentYear & df$month==currentMonth,]
+dfxR <- df[!df$category == 'rent',]
+
+orderByDate <- df[order(df$day),]
+orderByPrice <- df[order(df$price),]
+
+totalByCat <- summarise(group_by(df, category), price=sum(price))
+totalByCatxR <- summarise(group_by(dfxR, category), price=sum(price))
+meanByCat <- summarise(group_by(df, category), price=mean(price))
+
+```
+
+```{r echo=FALSE, message=FALSE}
+# Average number of days between each purchase in a certain category. 
+daysApart <- function(cat) {
+  dG <- df[df$category==cat,'day']
+  len <- length(dG)
+  diffs <- rep(NA, len-1)
+  
+  for (i in 1:len) {
+    for (j in 1:len) {
+      if (i-1 == j) {
+        diffs[j] = dG[i] - dG[j]
+      }
+    }
+  }
+  
+  return(diffs)
+}
+```
+
+```{r echo=FALSE}
+totalSpent <- format(sum(totalByCat$price), nsmall=2)
+fixedCosts <- format(sum(c(700,42.94,4.99)), nsmall=2)
+variableCosts <- format(sum(totalByCat$price) - sum(c(700,4.99,42.94)), nsmall=2)
+
+timesEatingOut <- as.integer(summary(droplevels(df)$category)['eating out'])
+avgCostMeal <- as.numeric(totalByCat[totalByCat$category == 'groceries','price'])/(60-timesEatingOut)
+avgCostEatingOut <- as.numeric(meanByCat[meanByCat$category == 'eating out','price'])
+
+daysApartGroceries <- format(mean(daysApart('groceries')), nsmall=2)
+OCeatingOut <- avgCostEatingOut / avgCostMeal
+```
+
+## Total spent this month: $`r totalSpent` 
+
+### Fixed/recurring costs: $`r fixedCosts`
+
+### Variable costs: $`r variableCosts`
+&nbsp;
+
+#### Useful statistics for spendings, excluding rent. 
+
+```{r echo=FALSE}
+spendxRstats <- t(data.frame(c(format(summary(dfxR$price), nsmall=2))))
+rownames(spendxRstats) <- NULL
+kable(spendxRstats)
+```
+&nbsp;
+
+#### Number of transactions in each category. 
+
+```{r echo=FALSE}
+transNums <- t(data.frame(c(summary(droplevels(df)$category))))
+rownames(transNums) <- NULL
+kable(transNums)
+```
+&nbsp;
+
+#### Average and total spendings by category. 
+
+```{r echo=FALSE}
+avgCosts <- meanByCat[order(-meanByCat$price),]
+avgCosts$price <- format(avgCosts$price, nsmall=2)
+
+totalCosts <- totalByCat[order(-totalByCat$price),]
+totalCosts$price <- round(totalCosts$price, digits=2)
+
+allCosts <- inner_join(avgCosts, totalCosts, by='category')
+colnames(allCosts) <- c('category', 'average', 'total')
+
+kable(allCosts)
+```
+&nbsp;
+
+#### The average number of days between for grocery runs is `r daysApartGroceries`.
+&nbsp;
+
+#### The opportunity cost of eating out is `r OCeatingOut` meals at home. 
+
+\newpage
+\center
+
+## Amount of money spent each day, colourized by category, excluding rent. 
+
+```{r echo=FALSE, fig.height=6}
+ggplot(dfxR) +
+  aes(x=day, y=price, fill=category) +
+  geom_bar(stat='identity')
+```
+
+\newpage 
+
+## Total spendings by category as a pie chart. 
+
+```{r echo=FALSE, fig.height=4}
+ggplot(totalByCat) +
+  aes(x=2, y=price, fill=category) +
+  geom_bar(stat='identity') +
+  coord_polar(theta='y') +
+  theme(axis.ticks.y = element_blank(), 
+        axis.text.y = element_blank()) +
+  labs(x='', y='')
+```
+
+
+## Total spendings by category as a bar chart. 
+
+```{r echo=FALSE, fig.height=4}
+ggplot(totalByCat) +
+  aes(x=category, y=price, fill=category) +
+  geom_bar(stat='identity') +
+  theme(axis.text.x = element_text(angle=90, vjust=0.5))
+```
+
+\newpage
+
+## Total spendings by category, excluding rent, as a pie chart. 
+
+```{r echo=FALSE, fig.height=4}
+ggplot(totalByCatxR) +
+  aes(x=2, y=price, fill=category) +
+  geom_bar(stat='identity') +
+  coord_polar(theta='y') +
+  theme(axis.ticks.y = element_blank(), 
+        axis.text.y = element_blank()) +
+  labs(x='', y='')
+```
+
+## Total spendings by category, excluding rent, as a bar chart. 
+
+```{r echo=FALSE, fig.height=4}
+ggplot(totalByCatxR) +
+  aes(x=category, y=price, fill=category) +
+  geom_bar(stat='identity') +
+  theme(axis.text.x = element_text(angle=90, vjust=0.5))
+```
+
+\newpage
+
+## Scatterplot of all transactions. 
+
+```{r echo=FALSE, fig.height=6}
+ggplot(dfxR) +
+  aes(x=day, y=price, colour=category) +
+  geom_point()
+```
+

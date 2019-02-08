@@ -1,0 +1,6 @@
+" Transaction file processing
+function! Process()
+	:%s/T.*Z//g
+	:%s/-/,/g
+	:%s/date/year,month,day/g
+endfunction
