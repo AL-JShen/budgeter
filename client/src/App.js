@@ -8,8 +8,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 const axios = require('axios');
 const moment = require('moment');
 
-const server = 'http://99.230.192.253:3000'; //localhost (mbp)
-//const server = 'http://104.154.131.70:3000'; //google f1 micro
+const server = 'localhost:3000';
 
 class App extends Component {
 
