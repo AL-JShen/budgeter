@@ -1,4 +1,4 @@
-# budgeter
+# Budgeter Version 1
 
 React for frontend, Node/Express for backend, MongoDB for database, R for visualization, Bash for making it easy. Version 2 currently in development. 
 
